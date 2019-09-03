@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>数独游戏</title>
+		<style type="text/css">
+			.grid_cell {
+				border: solid #87CEFA 1px;
+				width: 10vw;
+				height: 10vw;
+				text-align: center;
+				background-color: white;
+				color: dodgerblue;
+				font-weight: bold;
+			}
+			
+			.grid_cell_top {
+				border-top: solid #1E90FF 2px;
+			}
+			
+			.grid_cell_left {
+				border-left: solid #1E90FF 2px;
+			}
+			
+			.grid_cell_right {
+				border-right: solid #1E90FF 2px;
+			}
+			
+			.grid_cell_bottom {
+				border-bottom: solid #1E90FF 2px;
+			}
+			
+			.grid_cell_selected {
+				background-color: lightcyan;
+			}
+			
+			.grid_cell_value {
+				background-color: lightgoldenrodyellow;
+			}
+			
+			.grid_cell_solid {
+				color: darkslategray;
+			}
+			
+			.button {
+				/* Green */
+				border: none;
+				color: white;
+				padding: 3px 32px;
+				text-align: center;
+				text-decoration: none;
+				display: inline-block;
+				font-size: 16px;
+				margin: 7px 2px;
+				-webkit-transition-duration: 0.4s;
+				/* Safari */
+				transition-duration: 0.4s;
+				cursor: pointer;
+				background-color: white;
+				color: black;
+				border: 2px solid #87CEFA;
+			}
+			
+			.button:hover {
+				background-color: #4CAF50;
+				color: white;
+			}
+			
+			.btn_table {
+				margin-top: 7px;
+			}
+			
+			.btn_table .grid_cell {
+				width: 30vw;
+			}
+		</style>
+	</head>
+
+	<body>
+		<table id="div_grid" cellspacing="0"></table>
+
+		<table id="div_grid_value" class="btn_table"></table>
+		<table style="text-align: center; width: 100%;">
+			<tr>
+				<td>
+					<button class="button" onclick="shudu.Init(100,20)">初级</button>
+				</td>
+				<td>
+					<button class="button" onclick="shudu.Init(100,30)">中级</button>
+				</td>
+				<td>
+					<button class="button" onclick="shudu.Init(100,40)">高级</button>
+				</td>
+			</tr>
+		</table>
+
+	</body>
+	<script type="text/javascript">
+		shudu = {};
+		shudu.iniData = [
+			[1, 2, 3, 4, 5, 6, 7, 8, 9],
+			[4, 5, 6, 7, 8, 9, 1, 2, 3],
+			[7, 8, 9, 1, 2, 3, 4, 5, 6],
+			[2, 3, 1, 5, 6, 4, 8, 9, 7],
+			[5, 6, 4, 8, 9, 7, 2, 3, 1],
+			[8, 9, 7, 2, 3, 1, 5, 6, 4],
+			[3, 1, 2, 6, 4, 5, 9, 7, 8],
+			[6, 4, 5, 9, 7, 8, 3, 1, 2],
+			[9, 7, 8, 3, 1, 2, 6, 4, 5]
+		];
+		//初始化数据
+		shudu.data = [];
+		//数据副本
+		shudu.dupData = [];
+		//检测是否完成
+		shudu.check_complete = function() {
+			var check_v = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+			for(var i = 0; i < 9; i++) {
+				for(var j = 0; j < 9; j++) {
+					var v = shudu.data[i][j];
+					check_v[v - 1] += 1;
+				}
+			}
+			for(var i = 0; i < 9; i++) {
+				if(check_v[i] != 9) return false;
+			}
+			return true;
+		}
+		//交换数值
+		shudu.swopValue = function(v1, v2) {
+			for(var i = 0; i < 9; i++) {
+				for(var j = 0; j < 9; j++) {
+					var v = shudu.data[i][j];
+					if(v == v1) {
+						shudu.data[i][j] = v2;
+					} else if(v == v2) {
+						shudu.data[i][j] = v1;
+					}
+				}
+			}
+		}
+		//交换行
+		shudu.swopRow = function(row1, row2) {
+			for(var i = 0; i < 9; i++) {
+				var t = shudu.data[row1][i];
+				shudu.data[row1][i] = shudu.data[row2][i];
+				shudu.data[row2][i] = t;
+			}
+		}
+		//交换列
+		shudu.swopCol = function(col1, col2) {
+			for(var i = 0; i < 9; i++) {
+				var t = shudu.data[i][col1];
+				shudu.data[i][col1] = shudu.data[i][col2];
+				shudu.data[i][col2] = t;
+			}
+		}
+		//旋转
+		shudu.rotate = function() {
+			var roate_data = [];
+			for(var i = 0; i < 9; i++) {
+				var row = [];
+				for(var j = 0; j < 9; j++) {
+					row.push(shudu.data[j][i]);
+				}
+				roate_data.push(row);
+			}
+			shudu.data = roate_data;
+		}
+		//乱序
+		shudu.disrupt = function(cnt) {
+			//拷贝数据
+			shudu.data = [];
+			for(var i = 0; i < 9; i++) {
+				shudu.data[i] = [];
+				for(var j = 0; j < 9; j++) {
+					shudu.data[i][j] = shudu.iniData[i][j];
+				}
+			}
+			for(var i = 0; i < cnt; i++) {
+				//1.交换数值
+				var swop_value_v1 = Math.floor((Math.random() * 9) + 1);
+				var swop_value_v2 = Math.floor((Math.random() * 9) + 1);
+				shudu.swopValue(swop_value_v1, swop_value_v2);
+				//2.交换行数值
+				var swop_row1 = Math.floor(Math.random() * 3) * 3;
+				var swop_row2 = Math.floor(Math.random() * 2) + swop_row1;
+				shudu.swopRow(swop_row1, swop_row2);
+				//3.交换列数值
+				var swop_col1 = Math.floor(Math.random() * 3) * 3;
+				var swop_col2 = Math.floor(Math.random() * 2) + swop_col1;
+				shudu.swopCol(swop_col1, swop_col2);
+				//4.旋转
+				shudu.rotate();
+			}
+		}
+		//隐藏值
+		shudu.hiddenValue = function(hidden_count) {
+
+			//超出范围直接返回
+			if(hidden_count < 1 || hidden_count > 81) return;
+			//生成序号标识
+			var data_inds = [];
+			for(var i = 0; i < 81; i++) data_inds.push(i);
+			//根据隐藏数量随机隐藏值
+			for(var i = 0; i < hidden_count; i++) {
+				var data_inds_ind = Math.floor((Math.random() * (81 - i)));
+				var hid_ind = data_inds[data_inds_ind];
+				var x = Math.floor(hid_ind / 9);
+				var y = hid_ind % 9;
+				shudu.data[x][y] = 0;
+				data_inds.splice(data_inds_ind, 1);
+			}
+			//备份数据
+			shudu.dupData = [];
+			for(var i = 0; i < 9; i++) {
+				shudu.dupData[i] = [];
+				for(var j = 0; j < 9; j++) {
+					shudu.dupData[i][j] = shudu.data[i][j];
+				}
+			}
+
+		}
+		shudu.showData = function() {
+			for(var i = 0; i < 9; i++) {
+				document.write(shudu.data[i]);
+				document.write("<br/>");
+			}
+			document.write("<br/>");
+		}
+		shudu.drawGrid = function() {
+			var html_str = "<tr>";
+			for(var i = 0; i < 9; i++) {
+				for(var j = 0; j < 9; j++) {
+					var v = shudu.data[i][j];
+					if(v == 0) v = "";
+					var cell_class = "grid_cell";
+					if(i % 3 == 0) {
+						cell_class += " grid_cell_top"
+					} else if(i == 8) {
+						cell_class += " grid_cell_bottom"
+					}
+					if(j % 3 == 0) {
+						cell_class += " grid_cell_left"
+					} else if(j == 8) {
+						cell_class += " grid_cell_right"
+					}
+					if(shudu.dupData[i][j] > 0) {
+						cell_class += " grid_cell_solid"
+					}
+					html_str += "<td id='c_" + i + "_" + j + "' onclick='shudu.click_cell(" + i + "," + j + ")' class='" + cell_class + "' >" + v + "</td>";
+				}
+				html_str += "</tr>";
+			}
+			document.getElementById("div_grid").innerHTML = html_str;
+		}
+		shudu.sele_cell = {
+			x: -1,
+			y: -1
+		};
+		shudu.sele_value = -1;
+		shudu.drawValue = function() {
+			var html_str = "";
+			for(var i = 1; i <= 9; i++) {
+				if(i % 3 == 1) html_str += "<tr>"
+				html_str += "<td id='v_" + i + "' onclick='shudu.click_value(" + i + ")' class='grid_cell'>" + i + "</td>";
+				if(i % 3 == 0) html_str += "</tr>"
+			}
+
+			document.getElementById("div_grid_value").innerHTML = html_str;
+		}
+		shudu.set_value = function() {
+
+			if(shudu.sele_cell.x > -1) {
+				var ci=shudu.sele_cell.x;
+				var cj=shudu.sele_cell.y;
+				if(shudu.sele_value > -1 &&
+					shudu.dupData[ci][cj] == 0) {
+					shudu.data[ci][cj] = shudu.sele_value;
+					shudu.sele_cell = {
+						x: -1,
+						y: -1
+					};
+					shudu.sele_value = -1;
+					shudu.drawGrid();
+					shudu.drawValue();
+					if(shudu.check_complete()) {
+						alert("恭喜你！已经完成！");
+					}
+					shudu.save();
+				}
+				shudu.show_click_cell(ci, cj);
+			}
+
+		}
+		shudu.click_value = function(v) {
+			shudu.sele_value = v;
+			shudu.set_value();
+
+			for(var i = 1; i <= 9; i++) {
+				var cid = "v_" + i;
+				if(i == shudu.sele_value) {
+					document.getElementById(cid).classList.add("grid_cell_value");
+				} else {
+					document.getElementById(cid).classList.remove("grid_cell_value");
+				}
+			}
+		}
+
+		shudu.click_cell = function(ci, cj) {
+			if(ci==shudu.sele_cell.x && cj==shudu.sele_cell.y && shudu.sele_value== -1)
+			{
+				shudu.sele_value=0;
+			}
+			shudu.sele_cell = {
+				x: ci,
+				y: cj
+			};
+			
+			shudu.set_value();
+
+		}
+		shudu.show_click_cell = function(ci, cj) {
+
+			for(var i = 0; i < 9; i++) {
+				for(var j = 0; j < 9; j++) {
+					var cid = "c_" + i + "_" + j;
+					var v = shudu.data[i][j];
+
+					if(i == ci || j == cj) {
+						document.getElementById(cid).classList.add("grid_cell_selected");
+					} else {
+						document.getElementById(cid).classList.remove("grid_cell_selected");
+					}
+
+					if(v > 0 && v == shudu.data[ci][cj]) {
+						document.getElementById(cid).classList.add("grid_cell_value");
+					} else {
+						document.getElementById(cid).classList.remove("grid_cell_value");
+					}
+				}
+			}
+
+		}
+
+		shudu.Init = function(disrupt_cnt, hidden_cnt) {
+			shudu.disrupt(disrupt_cnt);
+			shudu.hiddenValue(hidden_cnt);
+			shudu.sele_cell = {
+				x: -1,
+				y: -1
+			};
+			shudu.sele_value = -1;
+			shudu.drawGrid();
+			shudu.drawValue();
+			shudu.save();
+		}
+		shudu.save = function() {
+			localStorage.setItem("shudu_data", JSON.stringify(shudu.data));
+			localStorage.setItem("shudu_dupData", JSON.stringify(shudu.dupData));
+		}
+		shudu.load = function() {
+			shudu.data = JSON.parse(localStorage.getItem("shudu_data"));
+			shudu.dupData = JSON.parse(localStorage.getItem("shudu_dupData"));
+		}
+		if(localStorage.shudu_data) {
+			shudu.load();
+			shudu.drawGrid();
+			shudu.drawValue();
+		} else {
+			shudu.Init(100, 30);
+		}
+	</script>
+
+</html>
